@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zylux — Live Green. Level Up.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: 0 0% 100%;
+            --bg: 150 30% 8%;
+            --bg-secondary: 150 25% 12%;
+            --fg: 0 0% 100%;
+            --muted-fg: 0 0% 60%;
+            --border: 0 0% 100% / 0.15;
+            --accent-green: 150 60% 45%;
+        }
+        html {
+            background: hsl(150 30% 8%);
+            color: hsl(0 0% 100%);
+        }
+        html.light-mode {
+            --bg: 150 20% 92%;
+            --bg-secondary: 150 15% 95%;
+            --fg: 0 0% 10%;
+            --muted-fg: 0 0% 45%;
+            --border: 0 0% 80%;
+            background: hsl(150 20% 92%);
+            color: hsl(0 0% 10%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: hsl(var(--bg));
+            color: hsl(var(--fg));
+            transition: background 0.5s ease, color 0.5s ease;
+            overflow-x: hidden;
+        }
+        .font-display { font-family: 'Space Grotesk', sans-serif; }
+        
+        /* Hello Screen */
+        #hello-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: hsl(150 30% 8%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        #hello-screen.hidden {
+            opacity: 0;
+            transform: scale(1.1);
+            pointer-events: none;
+        }
+        #hello-screen .hello-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(4rem, 15vw, 10rem);
+            font-weight: 900;
+            letter-spacing: -0.06em;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 0 60px hsl(150 60% 50% / 0.5), 0 0 120px hsl(150 60% 45% / 0.3);
+        }
+        #hello-screen .hello-text span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(100%);
+            animation: letter-reveal 0.6s ease forwards;
+            text-shadow: 0 0 40px hsl(150 60% 50% / 0.6);
+        }
+        #hello-screen .dot {
+            width: 16px;
+            height: 16px;
+            background: hsl(150 70% 55%);
+            border-radius: 50%;
+            margin-left: 6px;
+            animation: dot-pulse 1.5s ease infinite;
+            box-shadow: 0 0 20px hsl(150 70% 55%), 0 0 40px hsl(150 60% 45% / 0.5);
+        }
+        @keyframes letter-reveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes dot-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+        #hello-screen .underline {
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, hsl(150 60% 45%), hsl(170 60% 50%));
+            margin-top: 0.5rem;
+            animation: underline-grow 1s ease 1s forwards;
+        }
+        @keyframes underline-grow {
+            to { width: 120px; }
+        }
+        #hello-screen .subtitle {
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.4em;
+            margin-top: 1rem;
+            opacity: 0;
+            animation: fade-in 0.5s ease 1.5s forwards;
+            color: hsl(150 50% 60%);
+            text-transform: uppercase;
+        }
+        @keyframes fade-in {
+            to { opacity: 1; }
+        }
+        #hello-screen .skip-btn {
+            position: absolute;
+            bottom: 2.5rem;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            color: hsl(0 0% 60%);
+        }
+        #hello-screen .skip-btn:hover { opacity: 1; }
+        
+        /* Dynamic Island Navbar */
+        #navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #navbar.dynamic-island {
+            top: 0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            max-width: 200px;
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+        }
+        #navbar.dynamic-island .nav-desktop { display: none; }
+        #navbar.dynamic-island .nav-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        #navbar.dynamic-island .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.875rem;
+            background: linear-gradient(135deg, hsl(150 60% 45%), hsl(170 60% 50%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        #navbar.dynamic-island .status-dot {
+            width: 8px;
+            height: 8px;
+            background: hsl(150 60% 45%);
+            border-radius: 50%;
+            animation: status-pulse 2s ease infinite;
+        }
+        @keyframes status-pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .glass {
+            background: hsl(var(--bg-secondary) / 0.5);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid hsl(var(--border));
+            backdrop-saturate: 1.8;
+        }
+        .dark .glass { background: hsl(0 0% 100% / 0.03); }
+        
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: 
+                radial-gradient(circle at 20% 80%, hsl(150 35% 15%) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, hsl(145 30% 12%) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, hsl(155 25% 10%) 0%, transparent 40%);
+            animation: drift1 20s ease-in-out infinite;
+        }
+        .animated-bg::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: 
+                radial-gradient(circle at 60% 70%, hsl(150 30% 8%) 0%, transparent 45%),
+                radial-gradient(circle at 30% 30%, hsl(145 25% 6%) 0%, transparent 35%);
+            animation: drift2 25s ease-in-out infinite reverse;
+        }
+        .light-bg::before {
+            background: 
+                radial-gradient(circle at 80% 20%, hsl(150 25% 85%) 0%, transparent 50%),
+                radial-gradient(circle at 20% 70%, hsl(150 20% 90%) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, hsl(150 15% 88%) 0%, transparent 40%) !important;
+        }
+        .light-bg::after {
+            background: 
+                radial-gradient(circle at 60% 30%, hsl(150 18% 82%) 0%, transparent 45%),
+                radial-gradient(circle at 25% 75%, hsl(150 12% 88%) 0%, transparent 35%) !important;
+        }
+        
+        @keyframes drift1 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(5%, 3%) rotate(5deg); }
+            66% { transform: translate(-3%, 5%) rotate(-3deg); }
+        }
+        @keyframes drift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-5%, -5%) scale(1.1); }
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float-particle 15s ease-in-out infinite;
+        }
+        @keyframes float-particle {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+            50% { transform: translateY(-100px) scale(1.5); opacity: 0.8; }
+        }
+        
+        .grid-pattern {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            opacity: 0.3;
+        }
+        
+        .content-wrapper { position: relative; z-index: 10; }
+        .section-padding { padding: 6rem 2rem; }
+        @media (min-width: 768px) { .section-padding { padding: 6rem 4rem; } }
+        
+        .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: hsl(var(--muted-fg));
+        }
+        
+        .nav-link {
+            color: hsl(var(--fg) / 0.7);
+            transition: color 0.3s ease;
+        }
+        .nav-link:hover { color: hsl(var(--fg)); }
+        
+        .btn-primary {
+            background: hsl(var(--fg));
+            color: hsl(var(--bg));
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px hsl(var(--fg) / 0.3);
+        }
+        
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px hsl(var(--border) / 0.3);
+        }
+        
+        .hover-glow {
+            transition: all 0.4s ease;
+        }
+        .hover-glow:hover {
+            box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+        }
+        
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.03);
+        }
+        
+        .pulse-border {
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+            50% { box-shadow: 0 0 20px 0 hsl(var(--primary) / 0.1); }
+        }
+        
+        .theme-toggle {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: hsl(var(--bg-secondary) / 0.5);
+            border: 1px solid hsl(var(--border));
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, hsl(150 60% 45%), hsl(170 60% 50%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .peach-gradient {
+            background: linear-gradient(135deg, hsl(25 80% 75%), hsl(15 85% 70%), hsl(30 60% 65%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .glow-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, hsl(150 60% 45%), hsl(170 60% 50%));
+            animation: glow-pulse 2s ease-in-out infinite;
+            display: inline-block;
+        }
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+        
+        .bounce-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, hsl(150 60% 45%), hsl(170 60% 50%));
+            animation: bounce 1.5s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .accordion-item { border-bottom: 1px solid hsl(var(--border)); }
+        
+        .icon-rotate {
+            transition: transform 0.5s ease;
+        }
+        .icon-rotate:hover {
+            transform: rotate(180deg);
+        }
+        
+        .wave-border {
+            position: relative;
+        }
+        .wave-border::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, hsl(150 60% 45%)), transparent);
+            transform: scaleX(0);
+            transition: transform 0.5s ease;
+        }
+        .wave-border:hover::after {
+            transform: scaleX(1);
+        }
+        
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <!-- Hello Screen -->
+    <div id="hello-screen">
+        <div class="hello-text">
+            <span style="animation-delay: 0s;">H</span>
+            <span style="animation-delay: 0.1s;">e</span>
+            <span style="animation-delay: 0.2s;">l</span>
+            <span style="animation-delay: 0.3s;">l</span>
+            <span style="animation-delay: 0.4s;">o</span>
+            <span style="animation-delay: 0.5s;">.</span>
+            <span class="dot"></span>
+        </div>
+        <div class="underline"></div>
+        <p class="subtitle">WELCOME TO ZYLUX</p>
+        <p class="skip-btn" onclick="skipHello()">Skip →</p>
+    </div>
+
+    <!-- Dark Mode Background -->
+    <div class="animated-bg dark" id="dark-bg">
+        <div class="particle" style="left: 10%; top: 20%; width: 4px; height: 4px; background: hsl(150 50% 50% / 0.5); animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; top: 80%; width: 6px; height: 6px; background: hsl(145 45% 45% / 0.5); animation-delay: 2s;"></div>
+        <div class="particle" style="left: 30%; top: 50%; width: 4px; height: 4px; background: hsl(155 40% 40% / 0.5); animation-delay: 4s;"></div>
+        <div class="particle" style="left: 50%; top: 30%; width: 5px; height: 5px; background: hsl(150 55% 55% / 0.5); animation-delay: 1s;"></div>
+        <div class="particle" style="left: 70%; top: 70%; width: 4px; height: 4px; background: hsl(145 50% 45% / 0.5); animation-delay: 3s;"></div>
+        <div class="grid-pattern"></div>
+    </div>
+
+    <!-- Light Mode Background -->
+    <div class="animated-bg light-bg" id="light-bg" style="display: none;">
+        <div class="particle" style="left: 10%; top: 20%; width: 4px; height: 4px; background: hsl(150 30% 50% / 0.4); animation-delay: 0s;"></div>
+        <div class="particle" style="left: 25%; top: 75%; width: 5px; height: 5px; background: hsl(150 25% 45% / 0.4); animation-delay: 1.5s;"></div>
+        <div class="particle" style="left: 55%; top: 35%; width: 4px; height: 4px; background: hsl(150 35% 40% / 0.4); animation-delay: 3s;"></div>
+        <div class="particle" style="left: 75%; top: 60%; width: 6px; height: 6px; background: hsl(140 30% 35% / 0.4); animation-delay: 2s;"></div>
+        <div class="particle" style="left: 40%; top: 85%; width: 4px; height: 4px; background: hsl(160 25% 30% / 0.4); animation-delay: 4s;"></div>
+        <div class="grid-pattern"></div>
+    </div>
+
+    <div class="content-wrapper">
+        <!-- Navbar with Dynamic Island -->
+        <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 pt-4 px-8">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <!-- Desktop Nav Links (hidden when Dynamic Island) -->
+                <div class="nav-desktop flex items-center gap-8">
+                    <a href="#" class="font-display font-bold text-xl tracking-tight text-gradient">ZYLUX</a>
+                    <a href="#features" class="nav-link text-sm hover-scale inline-block">Features</a>
+                    <a href="#how-it-works" class="nav-link text-sm hover-scale inline-block">How It Works</a>
+                    <a href="#rewards" class="nav-link text-sm hover-scale inline-block">Rewards</a>
+                    <a href="#mission" class="nav-link text-sm hover-scale inline-block">Mission</a>
+                </div>
+                
+                <!-- Dynamic Island Content (hidden initially) -->
+                <div class="nav-content" style="display: none;">
+                    <span class="logo">ZYLUX</span>
+                    <span class="status-dot"></span>
+                </div>
+                
+                <!-- Mobile/Default -->
+                <div class="flex items-center gap-3">
+                    <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+                        <svg id="sun-icon" class="icon-rotate" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+                        </svg>
+                        <svg id="moon-icon" class="icon-rotate" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                        </svg>
+                    </button>
+                    <button class="glass w-10 h-10 rounded-full flex items-center justify-center hover-lift hover-glow" title="Cart">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                            <path d="M3 6h18"></path>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="min-h-screen flex items-center section-padding pt-24">
+            <div class="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+                <div class="reveal">
+                    <p class="label mb-4 flex items-center gap-2">
+                        <span class="glow-dot"></span>
+                        Emily Harper — Founder & CEO
+                    </p>
+                    <h1 class="font-display font-bold uppercase leading-[0.9] max-w-[280px]" style="font-size: clamp(2rem, 8vw, 5rem);">
+                        Live green<br>
+                        <span class="text-gradient">every day</span><br>
+                        make impact
+                    </h1>
+                    <button class="btn-primary px-8 py-3 rounded-full font-medium mt-8 text-sm inline-flex items-center gap-2 hover-lift">
+                        <span>Get Started</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                    </button>
+                </div>
+                <div class="hidden md:block float reveal">
+                    <h1 class="font-display font-bold uppercase text-center" style="font-size: clamp(3rem, 12vw, 10rem); letter-spacing: -0.02em;">
+                        <span class="text-gradient">Level</span><br>Up
+                    </h1>
+                </div>
+            </div>
+        </section>
+
+        <!-- Animated Dots -->
+        <div class="flex justify-center gap-3 py-4">
+            <div class="bounce-dot stagger-1"></div>
+            <div class="bounce-dot stagger-2"></div>
+            <div class="bounce-dot stagger-3"></div>
+        </div>
+
+        <!-- Bottom Cards -->
+        <section class="section-padding">
+            <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-6">
+                <!-- Left Card -->
+                <div class="glass rounded-2xl p-8 hover-lift hover-glow wave-border reveal">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="flex -space-x-3">
+                            <span class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-lg border-2 text-xl hover-scale" style="border-color: hsl(var(--bg)); cursor: pointer;">🌱</span>
+                            <span class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-lg border-2 text-xl hover-scale" style="border-color: hsl(var(--bg)); cursor: pointer;">🌿</span>
+                            <span class="w-10 h-10 rounded-full bg-green-700 flex items-center justify-center text-lg border-2 text-xl hover-scale" style="border-color: hsl(var(--bg)); cursor: pointer;">🌳</span>
+                        </div>
+                        <span class="text-sm" style="color: hsl(var(--muted-fg));">Trusted by eco-warriors</span>
+                        <div class="ml-auto glass px-3 py-1 rounded-full flex items-center gap-1 pulse-border">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="text-xs">Verified</span>
+                        </div>
+                    </div>
+                    <h3 class="font-display font-bold text-3xl">15K+</h3>
+                    <p class="text-sm" style="color: hsl(var(--muted-fg)); margin-top: 0.25rem;">Active users growing their eco impact</p>
+                </div>
+
+                <!-- Right Card -->
+                <div class="glass rounded-2xl p-8 hover-lift hover-glow reveal">
+                    <h3 class="font-display font-bold text-2xl mb-2 hover-scale">Precision recycling</h3>
+                    <p style="color: hsl(var(--muted-fg)); font-size: 0.875rem; margin-bottom: 1rem;">
+                        <span class="glow-dot"></span>
+                        (0.1%) Quest failure rate
+                    </p>
+                    <a href="#" class="text-sm flex items-center gap-1 group cursor-pointer hover-scale inline-flex">
+                        <span>Learn how it works</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Marquee Section -->
+        <section class="section-padding relative">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="font-display font-bold text-center uppercase reveal" style="font-size: clamp(2rem, 8vw, 6rem); line-height: 1;">
+                    <span class="hover-scale inline-block transition-transform">Simple</span>
+                    <span> / </span>
+                    <span class="hover-scale inline-block transition-transform">Smart</span>
+                    <span> / </span>
+                    <span class="hover-scale inline-block transition-transform">Growing</span>
+                </h2>
+
+                <div class="grid md:grid-cols-3 gap-6 mt-12">
+                    <!-- Stat Card -->
+                    <div class="glass rounded-2xl p-6 hover-lift reveal">
+                        <p class="font-display font-bold text-4xl hover-scale inline-block transition-transform">50+</p>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg));">Eco Quests</p>
+                        <a href="#" class="mt-4 text-xs flex items-center gap-1 cursor-pointer hover-scale inline-flex">
+                            <span>Learn more</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Feature Checklist -->
+                    <div class="glass rounded-2xl p-6 hover-lift reveal">
+                        <div class="space-y-3">
+                            <p class="flex items-center gap-2 hover-scale"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Preserve</p>
+                            <p class="flex items-center gap-2 hover-scale"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Fast Seal</p>
+                            <p class="flex items-center gap-2 hover-scale"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Track</p>
+                        </div>
+                    </div>
+
+                    <!-- CTA Row -->
+                    <div class="glass rounded-2xl p-6 flex flex-col justify-center hover-lift hover-glow reveal">
+                        <p class="text-sm mb-4">Start your journey and get a free eco starter kit</p>
+                        <button class="btn-primary w-fit px-6 py-2 rounded-full text-sm inline-flex items-center gap-2 hover-lift">
+                            <span>Get started</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Awards Badge -->
+                <div class="absolute top-0 right-0 glass px-4 py-2 rounded-full hover-scale reveal">
+                    <span class="text-xs font-medium">HK Eco Champion</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="features" class="section-padding">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="font-display font-bold text-center mb-12 reveal" style="font-size: clamp(2rem, 6vw, 4rem);">
+                    Zylux <span class="text-gradient">Features</span>
+                </h2>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Description -->
+                    <div class="glass rounded-2xl p-8 hover-lift hover-glow reveal">
+                        <p class="label mb-4">About</p>
+                        <h3 class="font-display font-semibold text-xl mb-4">Premier Eco-Lifestyle Platform</h3>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg)); margin-bottom: 1.5rem;">
+                            Zylux transforms daily sustainability habits into an engaging adventure. 
+                            Gamified quests, real recycling points, and virtual rewards.
+                        </p>
+                        <a href="#" class="text-sm flex items-center gap-1 group cursor-pointer hover-scale inline-flex">
+                            <span>Learn More</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                        </a>
+                    </div>
+
+                    <!-- Stacked Cards -->
+                    <div class="space-y-4">
+                        <div class="glass rounded-2xl p-6 hover-lift reveal">
+                            <div class="flex items-center gap-2 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span class="text-sm">Certified Materials</span>
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <span class="glass px-2 py-1 rounded text-xs hover-scale">S-05</span>
+                                <span class="glass px-2 py-1 rounded text-xs hover-scale">S-10</span>
+                                <span class="glass px-2 py-1 rounded text-xs hover-scale">S-14</span>
+                                <span class="glass px-2 py-1 rounded text-xs hover-scale">S-15</span>
+                            </div>
+                        </div>
+                        <div class="glass rounded-2xl p-6 hover-lift reveal">
+                            <div class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                <span class="text-sm">Sealing Service</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expert -->
+                    <div class="glass rounded-2xl p-8 hover-lift hover-glow reveal">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-full glass flex items-center justify-center hover-scale">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div>
+                                <p class="font-medium">Trusted Expert</p>
+                                <p class="text-xs" style="color: hsl(var(--muted-fg));">10+ years experience</p>
+                            </div>
+                        </div>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg));">
+                            Our team has helped over 10,000 Hong Kong residents build sustainable habits.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Process Section -->
+        <section id="how-it-works" class="section-padding">
+            <div class="max-w-7xl mx-auto">
+                <div class="text-center mb-12 reveal">
+                    <p class="label mb-2 flex items-center justify-center gap-2">
+                        <span class="glow-dot"></span>
+                        The Process
+                        <span class="glow-dot"></span>
+                    </p>
+                    <h2 class="font-display font-bold" style="font-size: clamp(2rem, 5vw, 3.5rem);">
+                        From habits to <span class="text-gradient">impact</span>
+                    </h2>
+                </div>
+
+                <div class="grid md:grid-cols-4 gap-4">
+<div class="glass rounded-2xl p-6 hover-lift reveal">
+                        <p class="font-mono text-xs mb-3" style="color: hsl(var(--primary));">01</p>
+                        <h3 class="font-display font-semibold text-lg mb-2 hover-scale">Source</h3>
+                        <p class="text-xs" style="color: hsl(var(--muted-fg));">Find recycling points across all 18 districts</p>
+                    </div>
+                    <div class="glass rounded-2xl p-6 hover-lift reveal">
+                        <p class="font-mono text-xs mb-3" style="color: hsl(var(--primary));">02</p>
+                        <h3 class="font-display font-semibold text-lg mb-2 hover-scale">Quest</h3>
+                        <p class="text-xs" style="color: hsl(var(--muted-fg));">Complete daily eco quests</p>
+                    </div>
+                    <div class="glass rounded-2xl p-6 hover-lift reveal">
+                        <p class="font-mono text-xs mb-3" style="color: hsl(var(--primary));">03</p>
+                        <h3 class="font-display font-semibold text-lg mb-2 hover-scale">Level Up</h3>
+                        <p class="text-xs" style="color: hsl(var(--muted-fg));">Earn XP and rank up</p>
+                    </div>
+                    <div class="glass rounded-2xl p-6 hover-lift reveal">
+                        <p class="font-mono text-xs mb-3" style="color: hsl(var(--primary));">04</p>
+                        <h3 class="font-display font-semibold text-lg mb-2 hover-scale">Grow</h3>
+                        <p class="text-xs" style="color: hsl(var(--muted-fg));">Watch your virtual tree grow</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="section-padding">
+            <div class="max-w-7xl mx-auto">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="text-center reveal">
+                        <p class="font-display font-bold hover-scale inline-block transition-transform" style="font-size: clamp(2.5rem, 6vw, 4.5rem); color: hsl(var(--primary))">90%</p>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg));">Recycling accuracy</p>
+                    </div>
+                    <div class="text-center reveal">
+                        <p class="font-display font-bold hover-scale inline-block transition-transform" style="font-size: clamp(2.5rem, 6vw, 4.5rem); color: hsl(var(--primary))">18</p>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg));">Districts covered</p>
+                    </div>
+                    <div class="text-center reveal">
+                        <p class="font-display font-bold hover-scale inline-block transition-transform" style="font-size: clamp(2.5rem, 6vw, 4.5rem); color: hsl(var(--primary))">2,400+</p>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg));">Recycling points</p>
+                    </div>
+                    <div class="text-center reveal">
+                        <p class="font-display font-bold hover-scale inline-block transition-transform" style="font-size: clamp(2.5rem, 6vw, 4.5rem); color: hsl(var(--primary))">0.1%</p>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg));">Quest failure rate</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="rewards" class="section-padding">
+            <div class="max-w-7xl mx-auto">
+                <div class="grid md:grid-cols-3 gap-12">
+                    <div>
+                        <p class="label mb-2 flex items-center gap-2">
+                            <span class="glow-dot"></span>
+                            FAQ
+                        </p>
+                        <h2 class="font-display font-bold" style="font-size: clamp(2rem, 5vw, 3.5rem);">Common questions</h2>
+                    </div>
+                    <div class="md:col-span-2" id="faq-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="section-padding">
+            <div class="max-w-4xl mx-auto text-center reveal">
+                <p class="label mb-4 flex items-center justify-center gap-2">
+                    <span class="glow-dot"></span>
+                    Ready to start?
+                    <span class="glow-dot"></span>
+                </p>
+                <h2 class="font-display font-bold mb-6" style="font-size: clamp(2.5rem, 8vw, 5rem);">
+                    Let's go <span class="text-gradient">green</span>
+                </h2>
+                <button class="btn-primary px-8 py-4 rounded-full font-medium flex items-center gap-2 mx-auto hover-lift">
+                    <span>Get started</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform hover:rotate-45"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="section-padding" style="border-top: 1px solid hsl(var(--border));">
+            <div class="max-w-7xl mx-auto">
+                <div class="grid md:grid-cols-4 gap-8 mb-12">
+                    <div>
+                        <a href="#" class="font-display font-bold text-xl text-gradient">ZYLUX</a>
+                        <p class="text-sm" style="color: hsl(var(--muted-fg)); margin-top: 0.5rem;">Live Green. Level Up.</p>
+                        <p class="text-xs" style="color: hsl(var(--muted-fg)); margin-top: 1rem;">
+                            Transforming Hong Kong into a greener city, one quest at a time.
+                        </p>
+                    </div>
+                    <div>
+                        <p class="font-medium mb-4">Product</p>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Features</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">How It Works</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Rewards</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Pricing</a>
+                    </div>
+                    <div>
+                        <p class="font-medium mb-4">Company</p>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">About</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Blog</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Careers</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Contact</a>
+                    </div>
+                    <div>
+                        <p class="font-medium mb-4">Support</p>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Help Center</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Privacy Policy</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Terms of Service</a>
+                        <a href="#" class="block text-sm hover-scale" style="color: hsl(var(--muted-fg));">Cookie Policy</a>
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row items-center justify-between pt-8" style="border-top: 1px solid hsl(var(--border));">
+                    <p class="text-sm" style="color: hsl(var(--muted-fg));">© 2026 Zylux. All rights reserved.</p>
+                    <div class="flex items-center gap-4 mt-4 md:mt-0">
+                        <a href="#" class="flex items-center gap-1 hover-scale" style="color: hsl(var(--muted-fg));"><span class="text-xs">Twitter</span></a>
+                        <a href="#" class="flex items-center gap-1 hover-scale" style="color: hsl(var(--muted-fg));"><span class="text-xs">LinkedIn</span></a>
+                        <a href="#" class="flex items-center gap-1 hover-scale" style="color: hsl(var(--muted-fg));"><span class="text-xs">Instagram</span></a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Hello Screen
+        function skipHello() {
+            const helloScreen = document.getElementById('hello-screen');
+            if (helloScreen) {
+                helloScreen.classList.add('hidden');
+            }
+        }
+        
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-hide after 4 seconds
+            setTimeout(() => {
+                skipHello();
+            }, 4000);
+        });
+        
+        // Scroll Reveal
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            const windowHeight = window.innerHeight;
+            revealElements.forEach(el => {
+                const elementTop = el.getBoundingClientRect().top;
+                const revealPoint = 150;
+                if (elementTop < windowHeight - revealPoint) {
+                    el.classList.add('visible');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+        
+        // Dynamic Island Navbar
+        const navbar = document.getElementById('navbar');
+        const navDesktop = document.querySelector('.nav-desktop');
+        const navContent = document.querySelector('.nav-content');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                navbar.classList.add('dynamic-island');
+                navbar.classList.add('glass');
+                if (navDesktop) navDesktop.style.display = 'none';
+                if (navContent) navContent.style.display = 'flex';
+            } else {
+                navbar.classList.remove('dynamic-island');
+                navbar.classList.remove('glass');
+                if (navDesktop) navDesktop.style.display = 'flex';
+                if (navContent) navContent.style.display = 'none';
+            }
+        });
+        
+        // FAQ Data
+        const faqData = [
+            { q: "How does Zylux help with recycling?", a: "Zylux maps all 2,400+ recycling points across Hong Kong's 18 districts. You can find the nearest station, filter by material type, and get directions—all in one place." },
+            { q: "How do I earn XP and level up?", a: "Complete daily and weekly eco quests like recycling items, using public transport, or reducing plastic use. Each completed quest earns XP that counts toward your rank progression." },
+            { q: "What rewards can I unlock?", a: "As you level up, you'll unlock virtual trees and eco-pets that grow with your progress. Collect rare species, seasonal rewards, and community milestones." },
+            { q: "Is my personal data secure?", a: "Yes. We prioritize your privacy and never share your data with third parties. All your progress and personal information is encrypted and stored securely." },
+            { q: "Is Zylux environmentally friendly?", a: "Absolutely. Zylux is designed to promote sustainable living and reduce waste across Hong Kong. Our entire platform runs on green energy." }
+        ];
+        
+        // Render FAQ
+        const faqContainer = document.getElementById('faq-container');
+        faqData.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'accordion-item';
+            div.innerHTML = `
+                <button class="w-full py-5 flex items-center justify-between text-left hover-scale" onclick="toggleFAQ(${index})">
+                    <span class="text-sm font-medium">${item.q}</span>
+                    <svg id="faq-icon-${index}" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                </button>
+                <div id="faq-answer-${index}" class="hidden overflow-hidden">
+                    <p class="pb-5 text-sm" style="color: hsl(var(--muted-fg));">${item.a}</p>
+                </div>
+            `;
+            faqContainer.appendChild(div);
+        });
+        
+        function toggleFAQ(index) {
+            const answer = document.getElementById('faq-answer-' + index);
+            const icon = document.getElementById('faq-icon-' + index);
+            answer.classList.toggle('hidden');
+            icon.style.transform = answer.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(45deg)';
+        }
+        
+        // Theme Toggle
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const isDark = savedTheme === 'dark' || !savedTheme;
+            setTheme(isDark);
+        }
+        
+        function setTheme(isDark) {
+            document.documentElement.classList.toggle('dark', isDark);
+            document.getElementById('dark-bg').style.display = isDark ? 'block' : 'none';
+            document.getElementById('light-bg').style.display = isDark ? 'none' : 'block';
+            
+            const btn = document.getElementById('theme-toggle');
+            const sunIcon = btn.querySelector('#sun-icon');
+            const moonIcon = btn.querySelector('#moon-icon');
+            if (sunIcon && moonIcon) {
+                sunIcon.style.display = isDark ? 'block' : 'none';
+                moonIcon.style.display = isDark ? 'none' : 'block';
+            }
+            
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+        
+        function toggleTheme() {
+            const isCurrentlyDark = document.documentElement.classList.contains('dark');
+            setTheme(!isCurrentlyDark);
+        }
+        
+        initTheme();
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>
